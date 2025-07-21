@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kasir POS</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: #f4f4f4;
+      padding: 20px;
+      margin: 0;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+    }
+
+    .logout {
+      background: #dc3545;
+      color: white;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .logout:hover {
+      background: #b02a37;
+    }
+
+    .produk-section {
+      margin-bottom: 30px;
+    }
+
+    .produk-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .produk-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: 0.3s;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .produk-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .produk-card img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .produk-card h4 {
+      margin: 5px 0;
+    }
+
+    .produk-card p {
+      color: #555;
+      font-weight: bold;
+    }
+
+    .cart-section, .payment-section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    input, button {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button.delete {
+      background: red;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+    }
+
+    button.delete:hover {
+      background: darkred;
+    }
+
+    .btn-primary {
+      background: #2e3a59;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+    }
+
+    .btn-primary:hover {
+      background: #44506e;
+    }
+
+    .flex {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .total {
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 18px;
+    }
+
+    @media (max-width: 600px) {
+      .flex {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      input, button {
+        width: 100%;
+      }
+
+      table, thead, tbody, th, td, tr {
+        font-size: 12px;
+      }
+
+      header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Kasir POS</h1>
+    <a href="login.html" class="logout">🔒 Logout</a>
+  </header>
+
+  <!-- Produk -->
+  <div class="produk-section">
+    <h3>Pilih Produk</h3>
+    <div class="produk-list" id="produkList">
+      <!-- Kartu produk akan di-generate oleh JS -->
+    </div>
+  </div>
+
+  <!-- Keranjang -->
+  <div class="cart-section">
+    <h3>Keranjang</h3>
+    <table id="keranjang">
+      <thead>
+        <tr>
+          <th>Produk</th>
+          <th>Qty</th>
+          <th>Harga</th>
+          <th>Total</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="total">Total: Rp <span id="total">0</span></div>
+  </div>
+
+  <!-- Pembayaran -->
+  <div class="payment-section">
+    <h3>Pembayaran</h3>
+    <div class="flex">
+      <label>Bayar (Rp):</label>
+      <input type="number" id="bayar" min="0" />
+      <button class="btn-primary" onclick="hitungKembalian()">Hitung</button>
+    </div>
+    <div class="total" id="kembalian-text"></div>
+    <br />
+    <button class="btn-primary" onclick="window.print()">🖨️ Cetak Struk</button>
+  </div>
+
+  <script>
+    const produkData = [
+      { nama: "Nasi Goreng", harga: 15000, gambar: "image/Nasgor.jpg" },
+      { nama: "Mie Ayam", harga: 12000, gambar: "image/MieAyam.jpg" },
+      { nama: "Es Teh", harga: 5000, gambar: "image/EsTeh.jpg" }
+    ];
+
+    const keranjang = [];
+    const tbody = document.querySelector('#keranjang tbody');
+    const totalEl = document.getElementById('total');
+
+    // Generate produk cards
+    const produkList = document.getElementById('produkList');
+    produkData.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'produk-card';
+      card.innerHTML = `
+        <img src="${p.gambar}" alt="${p.nama}">
+        <h4>${p.nama}</h4>
+        <p>Rp ${p.harga}</p>
+      `;
+      card.onclick = () => tambahKeKeranjang(p.nama, p.harga);
+      produkList.appendChild(card);
+    });
+
+    function tambahKeKeranjang(nama, harga) {
+      const existing = keranjang.find(item => item.nama === nama);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        keranjang.push({ nama, qty: 1, harga });
+      }
+      renderKeranjang();
+    }
+
+    function renderKeranjang() {
+      tbody.innerHTML = "";
+      let total = 0;
+
+      keranjang.forEach((item, index) => {
+        const subtotal = item.qty * item.harga;
+        total += subtotal;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item.nama}</td>
+          <td><input type="number" min="1" value="${item.qty}" onchange="ubahQty(${index}, this.value)"></td>
+          <td>Rp ${item.harga}</td>
+          <td>Rp ${subtotal}</td>
+          <td><button class="delete" onclick="hapusItem(${index})">X</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      totalEl.textContent = total;
+    }
+
+    function ubahQty(index, value) {
+      const qtyBaru = parseInt(value);
+      if (isNaN(qtyBaru) || qtyBaru < 1) {
+        alert("Qty minimal 1");
+        return;
+      }
+      keranjang[index].qty = qtyBaru;
+      renderKeranjang();
+    }
+
+    function hapusItem(index) {
+      keranjang.splice(index, 1);
+      renderKeranjang();
+    }
+
+    function hitungKembalian() {
+      const bayar = parseInt(document.getElementById('bayar').value);
+      const total = Number(totalEl.textContent.replace(/[^\d]/g, ""));
+      const text = document.getElementById('kembalian-text');
+
+      if (isNaN(bayar)) {
+        text.innerHTML = `<span style="color:red">Masukkan nominal bayar!</span>`;
+        return;
+      }
+
+      const kembalian = bayar - total;
+      if (kembalian < 0) {
+        text.innerHTML = `<span style="color:red">Uang kurang Rp ${-kembalian}</span>`;
+      } else {
+        text.innerHTML = `Kembalian: Rp ${kembalian}`;
+      }
+    }
+  </script>
+</body>
+</html>

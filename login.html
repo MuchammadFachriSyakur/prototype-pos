@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>POS Login</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f2f2f2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-box {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .login-box h1 {
+      margin-bottom: 24px;
+      font-size: 24px;
+      color: #333;
+    }
+
+    .login-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .login-btn.kasir {
+      background-color: #2196F3;
+    }
+
+    .login-btn:hover {
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-box">
+    <h1>Login POS</h1>
+    <button class="login-btn admin" onclick="window.location.href='dashboard_admin.html'">Login sebagai Admin</button>
+    <button class="login-btn kasir" onclick="window.location.href='dashboard_kasir.html'">Login sebagai Kasir</button>
+  </div>
+
+</body>
+</html>

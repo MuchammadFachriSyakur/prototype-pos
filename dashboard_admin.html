@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard POS</title>
+  <style>
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: #f0f2f5;
+    }
+
+    .main {
+      padding: 40px;
+      margin-right: 240px;
+      transition: all 0.3s ease;
+    }
+
+    .main h1 {
+      margin-bottom: 20px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+
+    .card h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #555;
+    }
+
+    .card p {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2e3a59;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background: #2e3a59;
+      color: white;
+      padding: 30px 20px;
+      position: fixed;
+      right: 0;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .sidebar h2 {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      margin: 12px 0;
+      display: block;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .sidebar a:hover {
+      background: #44506e;
+    }
+
+    /* Bottom nav */
+    .nav-bottom {
+      display: none;
+    }
+
+    .nav-bottom {
+      display: none;
+    }
+
+    .nav-bottom a {
+      color: white;
+      font-size: 18px;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .nav-bottom a.active {
+      color: #00aced;
+    }
+
+    .nav-bottom {
+      display: none;
+      justify-content: space-around;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: #2c3e50;
+      padding: 10px 0;
+      z-index: 999;
+    }
+
+    /* Modal */
+    #produkModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+    }
+
+    .modal-content button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+    }
+
+    /* Table scroll */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      .main {
+        margin-right: 0;
+        padding: 20px;
+        padding-bottom: 80px;
+      }
+
+      .nav-bottom {
+        display: flex;
+      }
+
+      .card p {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Bottom Navigation (Mobile) -->
+  <div class="nav-bottom">
+    <a href="#" onclick="setActive(this); loadContent('dashboard')">🏠</a>
+    <a href="#" onclick="setActive(this); loadContent('produk')">📦</a>
+    <a href="#" onclick="setActive(this); loadContent('laporan')">📊</a>
+    <a href="login.html">🔒</a>
+  </div>
+
+  <!-- Main -->
+  <div class="main" id="main-content">
+    <h1>Dashboard</h1>
+    <div class="cards">
+      <div class="card"><h3>Total Penjualan Hari Ini</h3><p>Rp 2.500.000</p></div>
+      <div class="card"><h3>Total Produk</h3><p>120</p></div>
+      <div class="card"><h3>Total Transaksi</h3><p>45</p></div>
+      <div class="card"><h3>Total Pelanggan</h3><p>300</p></div>
+    </div>
+  </div>
+
+  <!-- Sidebar (Desktop) -->
+  <div class="sidebar">
+    <div>
+      <h2>POS Menu</h2>
+      <a onclick="loadContent('dashboard')">🏠 Dashboard</a>
+      <a onclick="loadContent('produk')">📦 Produk</a>
+      <a onclick="loadContent('laporan')">📊 Laporan</a>
+      <a href="login.html">🔒 Logout</a>
+    </div>
+    <div><small>&copy; 2025 YourPOS</small></div>
+  </div>
+
+  <!-- Modal -->
+  <div id="produkModal">
+    <div class="modal-content">
+      <h2 id="formTitle">Tambah Produk</h2>
+      <input type="hidden" id="editIndex" />
+      <input type="text" id="namaProduk" placeholder="Nama Produk" />
+      <input type="text" id="kategoriProduk" placeholder="Kategori" />
+      <input type="text" id="varianProduk" placeholder="Varian" />
+      <input type="number" id="hargaProduk" placeholder="Harga" />
+      <input type="number" id="stokProduk" placeholder="Stok" />
+      <div style="text-align:right;">
+        <button onclick="closeForm()" style="background:#ccc;">Batal</button>
+        <button onclick="simpanProduk()" style="background:#2e3a59; color:white;">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let produkList = [
+      { nama: "Kaos Polos", kategori: "Pakaian", varian: "Merah - L", harga: 50000, stok: 20 }
+    ];
+
+    function loadContent(page) {
+      const main = document.getElementById("main-content");
+
+      if (page === "dashboard") {
+        main.innerHTML = `
+          <h1>Dashboard</h1>
+          <div class="cards">
+            <div class="card"><h3>Total Penjualan Hari Ini</h3><p>Rp 2.500.000</p></div>
+            <div class="card"><h3>Total Produk</h3><p>${produkList.length}</p></div>
+            <div class="card"><h3>Total Transaksi</h3><p>45</p></div>
+            <div class="card"><h3>Total Pelanggan</h3><p>300</p></div>
+          </div>`;
+      } else if (page === "produk") {
+        main.innerHTML = `
+          <h1>Manajemen Produk</h1>
+          <button onclick="openForm()" style="margin: 15px 0; padding: 10px 20px; background:#2e3a59; color:white; border:none; border-radius:8px;">+ Tambah Produk</button>
+          <div class="table-wrapper">
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; min-width: 600px;">
+              <thead style="background: #2e3a59; color: white;">
+                <tr>
+                  <th style="padding: 10px;">Nama</th>
+                  <th style="padding: 10px;">Kategori</th>
+                  <th style="padding: 10px;">Varian</th>
+                  <th style="padding: 10px;">Harga</th>
+                  <th style="padding: 10px;">Stok</th>
+                  <th style="padding: 10px;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="produkTbody"></tbody>
+            </table>
+          </div>`;
+        renderProduk();
+      } else if (page === "laporan") {
+        main.innerHTML = `
+          <h1>Laporan Penjualan</h1>
+          <p style="margin-top: 10px;">📅 Periode: Juli 2025</p>
+          <div class="cards" style="margin-top: 20px;">
+            <div class="card"><h3>Total Pendapatan</h3><p>Rp 55.000.000</p></div>
+            <div class="card"><h3>Produk Terlaris</h3><p>Kaos Polos</p></div>
+            <div class="card"><h3>Transaksi Bulanan</h3><p>720</p></div>
+          </div>`;
+      }
+    }
+
+    function renderProduk() {
+      const tbody = document.getElementById("produkTbody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      produkList.forEach((p, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td style="padding:10px;">${p.nama}</td>
+            <td style="padding:10px;">${p.kategori}</td>
+            <td style="padding:10px;">${p.varian}</td>
+            <td style="padding:10px;">Rp${p.harga.toLocaleString()}</td>
+            <td style="padding:10px;">${p.stok}</td>
+            <td style="padding:10px;">
+              <button onclick="editProduk(${i})" style="padding:4px 10px; background:#ffa502; color:white; border:none; border-radius:6px;">Edit</button>
+              <button onclick="hapusProduk(${i})" style="padding:4px 10px; background:#ff4757; color:white; border:none; border-radius:6px; margin-left:5px;">Hapus</button>
+            </td>
+          </tr>`;
+      });
+    }
+
+    function openForm(edit = false) {
+      document.getElementById("produkModal").style.display = "flex";
+      if (!edit) {
+        document.getElementById("formTitle").innerText = "Tambah Produk";
+        document.getElementById("editIndex").value = "";
+        document.getElementById("namaProduk").value = "";
+        document.getElementById("kategoriProduk").value = "";
+        document.getElementById("varianProduk").value = "";
+        document.getElementById("hargaProduk").value = "";
+        document.getElementById("stokProduk").value = "";
+      }
+    }
+
+    function closeForm() {
+      document.getElementById("produkModal").style.display = "none";
+    }
+
+    function simpanProduk() {
+      const index = document.getElementById("editIndex").value;
+      const nama = document.getElementById("namaProduk").value;
+      const kategori = document.getElementById("kategoriProduk").value;
+      const varian = document.getElementById("varianProduk").value;
+      const harga = parseInt(document.getElementById("hargaProduk").value);
+      const stok = parseInt(document.getElementById("stokProduk").value);
+
+      if (!nama || !kategori || !varian || isNaN(harga) || isNaN(stok)) {
+        alert("Isi semua kolom dengan benar!");
+        return;
+      }
+
+      const data = { nama, kategori, varian, harga, stok };
+
+      if (index === "") {
+        produkList.push(data);
+      } else {
+        produkList[index] = data;
+      }
+
+      closeForm();
+      loadContent("produk");
+    }
+
+    function editProduk(index) {
+      const p = produkList[index];
+      document.getElementById("editIndex").value = index;
+      document.getElementById("namaProduk").value = p.nama;
+      document.getElementById("kategoriProduk").value = p.kategori;
+      document.getElementById("varianProduk").value = p.varian;
+      document.getElementById("hargaProduk").value = p.harga;
+      document.getElementById("stokProduk").value = p.stok;
+      document.getElementById("formTitle").innerText = "Edit Produk";
+      openForm(true);
+    }
+
+    function hapusProduk(index) {
+      if (confirm("Yakin ingin menghapus produk ini?")) {
+        produkList.splice(index, 1);
+        loadContent("produk");
+      }
+    }
+
+    function setActive(el) {
+      document.querySelectorAll('.nav-bottom a').forEach(a => a.classList.remove('active'));
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>
