@@ -152,6 +152,24 @@
       font-size: 18px;
     }
 
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #struk, #struk * {
+        visibility: visible;
+      }
+
+      #struk {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+      }
+    }
+
     @media (max-width: 600px) {
       .flex {
         flex-direction: column;
@@ -172,21 +190,25 @@
         align-items: flex-start;
       }
     }
+
+    @media screen {
+      #struk {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 <body>
 
   <header>
     <h1>Kasir POS</h1>
-    <a href="index" class="logout">🔒 Logout</a>
+    <a href="login.html" class="logout">🔒 Logout</a>
   </header>
 
   <!-- Produk -->
   <div class="produk-section">
     <h3>Pilih Produk</h3>
-    <div class="produk-list" id="produkList">
-      <!-- Kartu produk akan di-generate oleh JS -->
-    </div>
+    <div class="produk-list" id="produkList"></div>
   </div>
 
   <!-- Keranjang -->
@@ -217,7 +239,16 @@
     </div>
     <div class="total" id="kembalian-text"></div>
     <br />
-    <button class="btn-primary" onclick="window.print()">🖨️ Cetak Struk</button>
+    <button id="btnCetak" class="btn-primary" onclick="cetakStruk()" disabled>🖨️ Cetak Struk</button>
+  </div>
+
+  <!-- STRUK -->
+  <div id="struk">
+    <h2>Struk Pembayaran</h2>
+    <ul id="struk-list"></ul>
+    <p id="struk-total"></p>
+    <p id="struk-bayar"></p>
+    <p id="struk-kembalian"></p>
   </div>
 
   <script>
@@ -230,8 +261,12 @@
     const keranjang = [];
     const tbody = document.querySelector('#keranjang tbody');
     const totalEl = document.getElementById('total');
+    const cetakBtn = document.getElementById('btnCetak');
 
-    // Generate produk cards
+    function formatRupiah(angka) {
+      return angka.toLocaleString('id-ID');
+    }
+
     const produkList = document.getElementById('produkList');
     produkData.forEach(p => {
       const card = document.createElement('div');
@@ -239,7 +274,7 @@
       card.innerHTML = `
         <img src="${p.gambar}" alt="${p.nama}">
         <h4>${p.nama}</h4>
-        <p>Rp ${p.harga}</p>
+        <p>Rp ${formatRupiah(p.harga)}</p>
       `;
       card.onclick = () => tambahKeKeranjang(p.nama, p.harga);
       produkList.appendChild(card);
@@ -266,15 +301,15 @@
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${item.nama}</td>
-          <td><input type="number" min="1" value="${item.qty}" onchange="ubahQty(${index}, this.value)"></td>
-          <td>Rp ${item.harga}</td>
-          <td>Rp ${subtotal}</td>
+          <td><input type="number" min="1" value="${item.qty}" onkeydown="if(event.key === 'Enter'){ubahQty(${index}, this.value)}"></td>
+          <td>Rp ${formatRupiah(item.harga)}</td>
+          <td>Rp ${formatRupiah(subtotal)}</td>
           <td><button class="delete" onclick="hapusItem(${index})">X</button></td>
         `;
         tbody.appendChild(row);
       });
 
-      totalEl.textContent = total;
+      totalEl.textContent = formatRupiah(total);
     }
 
     function ubahQty(index, value) {
@@ -294,20 +329,58 @@
 
     function hitungKembalian() {
       const bayar = parseInt(document.getElementById('bayar').value);
-      const total = Number(totalEl.textContent.replace(/[^\d]/g, ""));
+      const total = keranjang.reduce((acc, item) => acc + item.qty * item.harga, 0);
       const text = document.getElementById('kembalian-text');
+      const strukList = document.getElementById('struk-list');
+      const strukTotal = document.getElementById('struk-total');
+      const strukBayar = document.getElementById('struk-bayar');
+      const strukKembalian = document.getElementById('struk-kembalian');
 
-      if (isNaN(bayar)) {
-        text.innerHTML = `<span style="color:red">Masukkan nominal bayar!</span>`;
+      if (keranjang.length === 0) {
+        alert("Belum ada transaksi.");
+        cetakBtn.disabled = true;
+        return;
+      }
+
+      if (isNaN(bayar) || bayar < 0) {
+        text.innerHTML = `<span style="color:red">Masukkan nominal bayar yang valid!</span>`;
+        cetakBtn.disabled = true;
         return;
       }
 
       const kembalian = bayar - total;
       if (kembalian < 0) {
-        text.innerHTML = `<span style="color:red">Uang kurang Rp ${-kembalian}</span>`;
+        text.innerHTML = `<span style="color:red">Uang kurang Rp ${formatRupiah(-kembalian)}</span>`;
+        cetakBtn.disabled = true;
       } else {
-        text.innerHTML = `Kembalian: Rp ${kembalian}`;
+        text.innerHTML = `Kembalian: Rp ${formatRupiah(kembalian)}`;
+        cetakBtn.disabled = false;
+
+        strukList.innerHTML = "";
+        keranjang.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.nama} x${item.qty} = Rp ${formatRupiah(item.qty * item.harga)}`;
+          strukList.appendChild(li);
+        });
+        strukTotal.textContent = `Total: Rp ${formatRupiah(total)}`;
+        strukBayar.textContent = `Dibayar: Rp ${formatRupiah(bayar)}`;
+        strukKembalian.textContent = `Kembalian: Rp ${formatRupiah(kembalian)}`;
       }
+    }
+
+    function cetakStruk() {
+      if (keranjang.length === 0) {
+        alert("Tidak ada transaksi yang dicetak.");
+        return;
+      }
+
+      const bayar = parseInt(document.getElementById('bayar').value);
+      if (isNaN(bayar)) {
+        alert("Masukkan jumlah pembayaran terlebih dahulu.");
+        return;
+      }
+
+      window.print();
     }
   </script>
 </body>
